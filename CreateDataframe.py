@@ -31,10 +31,10 @@ def xlsx_to_series(path):
     away_game_total = df.iloc[1:, 26]
     away_halftime_score = df.iloc[39, 26]
     try:
-        away_final_score = df.iloc[78, 12]
+        away_final_score = df.iloc[78, 26]
     except IndexError:
         print("Index Error occurred, trying above cell. (77 instead of 78)")
-        away_final_score = df.iloc[77, 12]
+        away_final_score = df.iloc[77, 26]
     except Exception:
         print("Still got an error, marking score as -1 to be dropped later")
         away_final_score = -1

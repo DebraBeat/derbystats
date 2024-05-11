@@ -28,6 +28,7 @@ class Elo:
         # Number is a guess based on flat track stats data
         # In the initial ELO implementation, k = 32 and exp / 400, since flat track stats uses exp / 100,
         # I bumped k up by 4
+        # What needs to be implemented is a k function that takes in total number of games played
         self.k = 128
         # Number comes from flat track stats
         self.delta = 0.06
@@ -73,6 +74,10 @@ class Elo:
         new_away_rank = away_team_ranking + self.k * (s_dos_away - e_dos)
 
         return [new_home_rank, new_away_rank]
+
+class Glicko2:
+    def __init__(self):
+        pass
 
 elo_instance = Elo('Home Team', 'Away Team')
 

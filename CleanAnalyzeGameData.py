@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 
 df = pd.read_csv('GameData.csv')
@@ -24,8 +25,12 @@ primary_scores_df = primary_scores_df.sort_values(by=['Date'])
 # ELO Ranking System
 class Elo:
     def __init__(self, home_team_col, away_team_col):
-        # Number comes from wikipedia, could be changed later
-        self.k = 32
+        # Number is a guess based on flat track stats data
+        # In the initial ELO implementation, k = 32 and exp / 400, since flat track stats uses exp / 100,
+        # I bumped k up by 4
+        self.k = 128
+        # Number comes from flat track stats
+        self.delta = 0.06
 
         # Concatenate the team columns from the main df into a Series
         self.elo_ser = pd.concat([df[home_team_col], df[away_team_col]])
@@ -35,33 +40,24 @@ class Elo:
         self.elo_ser = self.elo_ser.to_frame()
         # Name the column (which was previously unnamed)
         self.elo_ser.columns = ['Team']
-        # Insert another column for the score, initialized to 1200
-        self.elo_ser.insert(1, "Elo Score", 1200)
+        # Insert another column for the score, initialized to 700
+        self.elo_ser.insert(1, "Elo Score", 700)
         self.elo_ser = self.elo_ser.set_axis(self.elo_ser['Team'], axis=0)
         self.elo_ser = self.elo_ser["Elo Score"]
 
-    def expected_scores(self, match: pd.Series) -> [int]:
+    def expected_dos(self, match: pd.Series) -> int:
         home_team_ranking = self.elo_ser.loc[match.loc['Home Team']]
         away_team_ranking = self.elo_ser.loc[match.loc['Away Team']]
 
-        total_match_score = 1.0 * match.loc['Home Team Score'] + match.loc['Away Team Score']
+        exp = math.e**((away_team_ranking - home_team_ranking - self.delta) / 100)
+        dos = -1.0 + (2.0 / (1.0 + exp))
 
-        # Shorthand to make the expectation formulae below more concise
-        q_home = 10.0**(home_team_ranking / 400.0)
-        q_away = 10.0**(away_team_ranking / 400.0)
-
-        # Without multiplying by total_match_score, our e_home and e_away are our probabilities of
-        # each team winning. Our expectation is (by definition), the value of the score multiplied
-        # by its probability.
-        e_home = total_match_score * q_home / (q_home + q_away)
-        e_away = total_match_score * q_away / (q_home + q_away)
-
-        return [e_home, e_away]
+        return dos
 
     def update_ranking(self, match: pd.Series) -> [int]:
         total_match_score = 1.0 * match.loc['Home Team Score'] + match.loc['Away Team Score']
         # Expected Scores
-        e_home, e_away = self.expected_scores(match)
+        e_dos =  self.expected_dos(match)
 
         home_team_ranking = self.elo_ser.loc[match.loc['Home Team']]
         away_team_ranking = self.elo_ser.loc[match.loc['Away Team']]
@@ -70,13 +66,23 @@ class Elo:
         s_home = match.loc['Home Team Score']
         s_away = match.loc['Away Team Score']
 
-        dos = ()
+        s_dos_home = (s_home - s_away) / total_match_score
+        s_dos_away = (s_away - s_home) / total_match_score
 
-        new_home_rank = home_team_ranking + self.k * (s_home - e_home)
-        new_away_rank = away_team_ranking + self.k * (s_away - e_away)
+        new_home_rank = home_team_ranking + self.k * (s_dos_home - e_dos)
+        new_away_rank = away_team_ranking + self.k * (s_dos_away - e_dos)
 
         return [new_home_rank, new_away_rank]
 
+elo_instance = Elo('Home Team', 'Away Team')
 
+# Need to find a vectorized solution. Until then, a for loop will have to do.
+for index, match in primary_scores_df.iterrows():
+    new_home_rank, new_away_rank = elo_instance.update_ranking(match)
+    elo_instance.elo_ser.loc[match.loc['Home Team']] = int(new_home_rank)
+    elo_instance.elo_ser.loc[match.loc['Away Team']] = int(new_away_rank)
+
+# Save the elo df for later use
+elo_instance.elo_ser.to_csv('elo_ranks')
 # Save the primary scores df for later use
 primary_scores_df.to_csv('PrimaryScoresData')

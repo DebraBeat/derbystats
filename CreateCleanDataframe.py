@@ -84,8 +84,8 @@ for filename in os.listdir(directory):
 df = df.drop(columns='Unnamed: 0')
 # We want to make our team name columns string, our date column datetime, and the rest integers
 # First let's start with the team names and date columns
-df['Home Team'] = df['Home Team'].astype(str)
-df['Away Team'] = df['Away Team'].astype(str)
+df['Home Team'] = df['Home Team'].astype('string')
+df['Away Team'] = df['Away Team'].astype('string')
 df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
 # Convert values in numeric cols to integers

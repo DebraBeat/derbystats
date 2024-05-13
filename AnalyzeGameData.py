@@ -1,7 +1,10 @@
 import math
 import pandas as pd
+from CleanDataframe import clean
 
 df = pd.read_csv('GameData.csv')
+
+df = clean(df)
 
 # Create a primary scores DataFrame and drop indices with missing values.
 primary_scores_df = df[['Home Team', 'Away Team', 'Date', 'Home Team Score', 'Away Team Score']].dropna()
@@ -76,6 +79,6 @@ for index, match in primary_scores_df.iterrows():
     elo_instance.elo_ser.loc[match.loc['Away Team']] = int(new_away_rank)
 
 # Save the elo df for later use
-elo_instance.elo_ser.to_csv('elo_ranks')
+elo_instance.elo_ser.to_csv('elo_ranks.csv')
 # Save the primary scores df for later use
 primary_scores_df.to_csv('PrimaryScoresData')

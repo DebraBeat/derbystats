@@ -13,9 +13,8 @@ primary_scores_df = primary_scores_df.sort_values(by=['Date'])
 
 
 # ELO Ranking System
-# TODO: Rewrite - Hide access to the series, rewrite __init__ to take in an arbitrary dataframe
 class Elo:
-    def __init__(self, home_team_col, away_team_col):
+    def __init__(self, input_df, home_team_col, away_team_col):
         # Number is a guess based on flat track stats data
         # In the initial ELO implementation, k = 32 and exp / 400, since flat track stats uses exp / 100,
         # I bumped k up by 4
@@ -25,7 +24,7 @@ class Elo:
         self.delta = 0.06
 
         # Concatenate the team columns from the main df into a Series
-        self.elo_ser = pd.concat([df[home_team_col], df[away_team_col]])
+        self.elo_ser = pd.concat([input_df[home_team_col], input_df[away_team_col]])
         # Drop duplicates from the Series
         self.elo_ser = self.elo_ser.drop_duplicates()
         # Convert the Series to a DataFrame
@@ -40,6 +39,7 @@ class Elo:
         # Remove the team name column, thus making the type of elo_ser from a DataFrame to a Series
         self.elo_ser = self.elo_ser["Elo Rating"]
 
+    #   We use Difference over Sum (DoS or dos) to better reflect a team's dominance in a game.
     def expected_dos(self, match: pd.Series) -> int:
         home_team_ranking = self.elo_ser.loc[match.loc['Home Team']]
         away_team_ranking = self.elo_ser.loc[match.loc['Away Team']]
@@ -72,10 +72,10 @@ class Elo:
 # TODO: Implement glicko-2 ranking algorithm
 # Implementation of this document: http://www.glicko.net/glicko/glicko2.pdf
 class Glicko2:
-    def __init__(self, df, home_team_col, away_team_col):
+    def __init__(self, input_df, home_team_col, away_team_col):
         self._tau = 0.75
 
-        self.glicko_df = pd.concat(df[home_team_col], df[away_team_col])
+        self.glicko_df = pd.concat(input_df[home_team_col], input_df[away_team_col])
         self.glicko_df = self.glicko_df.drop_duplicates()
         self.glicko_df = self.glicko_df.to_frame()
         self.glicko_df.columns = ['Team']
@@ -108,7 +108,7 @@ class Glicko2:
     def get_delta(self, team_name):
         pass
 
-elo_instance = Elo('Home Team', 'Away Team')
+elo_instance = Elo(df, 'Home Team', 'Away Team')
 
 # Need to find a vectorized solution. Until then, a for loop will have to do.
 for index, match in primary_scores_df.iterrows():

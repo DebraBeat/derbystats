@@ -13,6 +13,9 @@ primary_scores_df = df[['Home Team', 'Away Team', 'Date',
 # Sort by date
 primary_scores_df = primary_scores_df.sort_values(by=['Date'])
 
+# Save the primary scores df for later use
+primary_scores_df.to_csv('PrimaryScoresData.csv')
+
 
 # ELO Ranking System
 class Elo:
@@ -82,7 +85,6 @@ class Elo:
         return [new_home_rank, new_away_rank]
 
 
-# TODO: Implement glicko-2 ranking algorithm: Add getter methods for volatity, V, and Delta
 # Implementation of this document: http://www.glicko.net/glicko/glicko2.pdf
 class Glicko2:
 
@@ -92,8 +94,8 @@ class Glicko2:
 
         # Create a DataFrame consisting of the team names in the same
         # fashion as the Elo class.
-        self.glicko_df = pd.concat(input_df[home_team_col],
-                                   input_df[away_team_col])
+        self.glicko_df = pd.concat([input_df[home_team_col],
+                                    input_df[away_team_col]])
         self.glicko_df = self.glicko_df.drop_duplicates()
         self.glicko_df = self.glicko_df.to_frame()
         self.glicko_df.columns = ['Team']
@@ -135,7 +137,9 @@ class Glicko2:
         g = self.get_g(home_team_name)
         e = self.get_e(home_team_name, away_team_name)
 
-        return 1.0 / (team_v + g ** 2 * e * (1 - e))
+        # NOTE: We have to invert team_v in order to get the summation\
+        # expression on it's own. Otherwise we cannot add to it.
+        return 1.0 / (1.0 / team_v + g ** 2 * e * (1 - e))
 
     def get_delta(self, s, home_team_name, away_team_name):
         team_v = self.glicko_df.loc[home_team_name, 'V']
@@ -165,15 +169,13 @@ class Glicko2:
         else:
             return 0.5
 
-    def get_new_vol(self, home_team_name, away_team_name,
-                    home_team_score, away_team_score):
+    def get_new_vol(self, home_team_name):
         # Initial variables
         sigma = self.glicko_df.loc[home_team_name, 'Rating Volatility']
         phi = self.get_phi(home_team_name)
-        v = self.get_v(home_team_name, away_team_name)
+        v = self.glicko_df.loc[home_team_name, 'V']
 
-        s = self.get_s(home_team_score, away_team_score)
-        delta = self.get_delta(s, home_team_name, away_team_name)
+        delta = self.glicko_df.loc[home_team_name, 'Delta']
 
         # Step 5 part 1
         a = math.log(sigma ** 2)
@@ -218,38 +220,74 @@ class Glicko2:
         return new_sigma
 
     # Step 6 and Step 7 part 1:
-    def get_new_phi(self, home_team_name, away_team_name,
-                    home_team_score, away_team_score):
+    def get_new_phi(self, home_team_name):
+
+        phi = self.get_phi(home_team_name)
+        v = self.glicko_df.loc[home_team_name, 'V']
+        new_vol = self.get_new_vol(home_team_name)
 
         # Step 6
-        inverse_phi_star_sq = 1.0 / (self.get_phi(home_team_name)**2 +
-                                     self.get_new_vol(home_team_name, away_team_name,
-                                                      home_team_score, away_team_score))
-        inverse_v = 1.0 / self.get_v(home_team_name, away_team_name)
+        inverse_phi_star_sq = 1.0 / (phi**2 + new_vol**2)
+        inverse_v = 1.0 / v
 
         return 1.0 / math.sqrt(inverse_phi_star_sq + inverse_v)
 
     # Step 7 part 2
-    def get_new_mu(self, home_team_name, away_team_name,
-                   home_team_score, away_team_score):
-
+    def get_new_mu(self, home_team_name, new_phi):
         mu = self.get_mu(home_team_name)
-        new_phi = self.get_new_phi(home_team_name, away_team_name,
-                                   home_team_score, away_team_score)
-        s = self.get_s(home_team_score, away_team_score)
 
         # Note that the summation as defined in Step 3 is the same
         # as the delta value when divided by v
-        summa = (self.get_delta(s, home_team_name, away_team_name) /
-                 self.get_v(home_team_name, away_team_name))
+        v = self.glicko_df.loc[home_team_name, 'V']
+        delta = self.glicko_df.loc[home_team_name, 'Delta']
+        summa = v / delta
 
         return mu + new_phi**2 * summa
 
     # Perform all steps in order and update ratings
     def update_rating(self, home_team_name, away_team_name,
                       home_team_score, away_team_score):
-        pass
 
+        # NOTE: Steps 1, 2, 3 are all performed inside other steps
+
+        # Step 3 - get new v
+        home_team_v = self.get_v(home_team_name, away_team_name)
+        away_team_v = self.get_v(away_team_name, home_team_name)
+
+        # Step 3 - set new v
+        self.glicko_df.loc[home_team_name, 'V'] = home_team_v
+        self.glicko_df.loc[away_team_name, 'V'] = away_team_v
+
+        # Step 4 - get new delta
+        s = self.get_s(home_team_score, away_team_score)
+        home_team_delta = self.get_delta(s, home_team_name, away_team_name)
+        away_team_delta = self.get_delta(s, away_team_name, home_team_name)
+
+        # Step 4 - set new delta
+        self.glicko_df.loc[home_team_name, 'Delta'] = home_team_delta
+        self.glicko_df.loc[away_team_name, 'Delta'] = away_team_delta
+
+        # Step 5, 6 and 7a
+        home_team_new_phi = self.get_new_phi(home_team_name)
+        away_team_new_phi = self.get_new_phi(away_team_name)
+
+        # Step 7b
+        home_team_new_mu = self.get_new_mu(home_team_name, home_team_new_phi)
+        away_team_new_mu = self.get_new_mu(away_team_name, away_team_new_phi)
+
+        # Step 8 - get new ratings and rating deviations
+        new_home_rank = 173.7178 * home_team_new_mu + 1500
+        new_away_rank = 173.7178 * away_team_new_mu + 1500
+
+        new_home_rd = 173.7178 * home_team_new_phi
+        new_away_rd = 173.7178 * away_team_new_phi
+
+        # Step 8 - set new ratings and rating deviations
+        self.glicko_df.loc[home_team_name, 'Glicko-2 Rating'] = new_home_rank
+        self.glicko_df.loc[away_team_name, 'Glicko-2 Rating'] = new_away_rank
+
+        self.glicko_df.loc[home_team_name, 'Rating Deviation'] = new_home_rd
+        self.glicko_df.loc[away_team_name, 'Rating Deviation'] = new_away_rd
 
 
 elo_instance = Elo(df, 'Home Team', 'Away Team')
@@ -262,5 +300,15 @@ for index, match in primary_scores_df.iterrows():
 
 # Save the elo df for later use
 elo_instance.elo_ser.to_csv('elo_ranks.csv')
-# Save the primary scores df for later use
-primary_scores_df.to_csv('PrimaryScoresData.csv')
+
+glicko_instance = Glicko2(df, 'Home Team', 'Away Team')
+
+for index, match in primary_scores_df.iterrows():
+    home_team_name = match.loc['Home Team']
+    away_team_name = match.loc['Away Team']
+    home_team_score = int(match.loc['Home Team Score'])
+    away_team_score = int(match.loc['Away Team Score'])
+
+    glicko_instance.update_rating(home_team_name, away_team_name,
+                                  home_team_score, away_team_score)
+

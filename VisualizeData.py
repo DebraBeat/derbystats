@@ -46,44 +46,52 @@ def max_score():
 
 
 # construct Poisson for each mean goals value
-poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
-poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
-poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
+# poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
+# poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
+# poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
 
 # matplotlib version
 #
 # Histogram of final scores
-plt.hist(score_df[['Home Team Score', 'Away Team Score']].values,
-       label=['Home', 'Away'], density=True)
-
-# Poisson distribution graphs for home and away teams
-pois_home, = plt.plot([i for i in range(1, max_score()+1)], poisson_pred_home,
-                      linestyle='-', marker='o', label="Home")
+# plt.hist(score_df[['Home Team Score', 'Away Team Score']],
+#        label=['Home', 'Away'], density=True, bins=711)
+#
+# # Poisson distribution graphs for home and away teams
+# pois_home, = plt.plot([i for i in range(1, max_score()+1)], poisson_pred_home,
+#                       linestyle='-', label="Home")
 # pois_away, = plt.plot([i for i in range(1, max_score()+1)], poisson_pred_away,
-#                       linestyle='-', marker='o', label="Away")
+#                       linestyle='-', label="Away")
+#
+# leg=plt.legend(loc='upper right', fontsize=13, ncol=2)
+# leg.set_title("   Actual          Poisson       ",
+#               prop= {'size':'14', 'weight':'bold'})
+#
+# plt.xticks([i*33 for i in range(1,11)],[i*33 for i in range(1,11)])
+# plt.xlabel("Final Scores",size=13)
+# plt.ylabel("Proportion of Matches",size=13)
+# plt.title("Proportion of scores per game",size=14,fontweight='bold')
+#
+#
+# plt.show()
 
-leg=plt.legend(loc='upper right', fontsize=13, ncol=2)
-leg.set_title("Poisson           Actual        ",
-              prop= {'size':'14', 'weight':'bold'})
-
-plt.xticks([i*33 for i in range(1,11)],[i*33 for i in range(1,11)])
-plt.xlabel("Final Scores",size=13)
-plt.ylabel("Proportion of Matches",size=13)
-plt.title("Proportion of scores per game",size=14,fontweight='bold')
-
-
+# seaborn version
+sns.histplot(data=score_df,
+             x='Home Team Score',
+             y='Away Team Score',
+             cbar=True)
 plt.show()
 
-# # seaborn version
-# d = {i : poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())}
-# poisson_df = pd.DataFrame(d)
-# sns.histplot(data=poisson_pred,
-#              x='Home Team Score')
-# plt.show()
+sns.histplot(data=score_df,
+             multiple='dodge',
+             shrink=0.6,
+             kde=True)
+plt.show()
 
-# sns.relplot(
-#     data=home_jam_df.T,
-#     x=[i + 1 for i in range(len(home_jam_df.columns.T))],
-#     y=[10 for i in range(len(home_jam_df.columns.T))]
-# )
-# plt.show()
+g = sns.JointGrid(data=score_df,
+                  x="Home Team Score",
+                  y="Away Team Score",
+                  )
+g.plot_joint(sns.histplot)
+g.plot_marginals(sns.boxplot)
+
+plt.show()

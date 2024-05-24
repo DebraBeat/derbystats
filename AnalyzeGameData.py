@@ -182,50 +182,29 @@ class Glicko2:
         sigma = self.glicko_df.loc[home_team_name, 'Rating Volatility']
         phi = self.get_phi(home_team_name)
         v = self.glicko_df.loc[home_team_name, 'V']
-
         delta = self.glicko_df.loc[home_team_name, 'Delta']
 
-        # Step 5 part 1
-        a = np.log(sigma ** 2)
+        # New implementation taken from Ryan Kirkman glicko2 implementation:
+        # https://github.com/ryankirkman/pyglicko2/blob/master/glicko2.py
 
-        # Step 5 part 2
-        A = a
-        if delta ** 2 > phi ** 2 + v:
-            B = math.log(delta ** 2 - phi ** 2 - v)
-        else:
-            k = 1
-            x = a - k * self.__tau
-            while self.f(x, delta, phi, v, a) < 0:
-                k += 1
-                x = a - k * self.__tau
+        a = math.log(math.pow(sigma, 2))
+        x0 = a
+        x1 = 0
 
-            B = a - k * self.__tau
+        while x0 != x1:
+            # New iteration, so x(i) becomes x(i-1)
+            x0 = x1
+            d = math.pow(self.get_mu(home_team_name), 2) + v + math.exp(x0)
+            h1 = -(x0 - a) / math.pow(self.__tau, 2) - 0.5 * math.exp(x0) \
+            / d + 0.5 * math.exp(x0) * math.pow(delta / d, 2)
+            h2 = -1 / math.pow(self.__tau, 2) - 0.5 * math.exp(x0) * \
+            (math.pow(self.get_mu(home_team_name), 2) + v) \
+            / math.pow(d, 2) + 0.5 * math.pow(delta, 2) * math.exp(x0) \
+            * (math.pow(self.get_mu(home_team_name), 2) + v - math.exp(x0)) / math.pow(d, 3)
+            x1 = x0 - (h1 / h2)
 
-        # Step 5 part 3
-        fA = self.f(A, delta, phi, v, a)
-        fB = self.f(B, delta, phi, v, a)
+        return math.exp(x1 / 2)
 
-        # Step 5 part 4
-        while abs(B - A) > self.__epsilon:
-            # part 4a
-            C = A + (A - B) * fA / (fB - fA)
-            fC = self.f(C, delta, phi, v, a)
-
-            # part 4b
-            if fC * fB <= 0:
-                A = B
-                fA = fB
-            else:
-                fA = fA / 2.0
-
-            # part 4c
-            B = C
-            fB = fC
-
-        # Step 5 part 5
-        new_sigma = math.e ** (A / 2)
-
-        return new_sigma
 
     # Step 6 and Step 7 part 1:
     def get_new_phi(self, home_team_name):
@@ -287,6 +266,11 @@ class Glicko2:
         new_home_rank = 173.7178 * home_team_new_mu + 1500
         new_away_rank = 173.7178 * away_team_new_mu + 1500
 
+
+        # print(f'home team phi: {home_team_new_phi}')
+        # print(f'away team name: {away_team_name}, new rank: {new_away_rank}')
+
+
         new_home_rd = 173.7178 * home_team_new_phi
         new_away_rd = 173.7178 * away_team_new_phi
 
@@ -296,6 +280,9 @@ class Glicko2:
 
         self.glicko_df.loc[home_team_name, 'Rating Deviation'] = int(new_home_rd)
         self.glicko_df.loc[away_team_name, 'Rating Deviation'] = int(new_away_rd)
+
+        self.glicko_df.loc[home_team_name, 'Rating Volatility'] = int(home_team_new_phi)
+        self.glicko_df.loc[away_team_name, 'Rating Volatility'] = int(away_team_new_phi)
 
 
 elo_instance = Elo(df, 'Home Team', 'Away Team')
@@ -311,16 +298,20 @@ elo_instance.elo_ser.to_csv('elo_ranks.csv')
 
 glicko_instance = Glicko2(df, 'Home Team', 'Away Team')
 
+i = 0
 for index, match in primary_scores_df.iterrows():
     home_team_name = match.loc['Home Team']
     away_team_name = match.loc['Away Team']
     home_team_score = int(match.loc['Home Team Score'])
     away_team_score = int(match.loc['Away Team Score'])
 
+    i += 1
+    if i == 39:
+        break
     # Using difference over sum for scores instead of raw scores
     home_dos = (home_team_score - away_team_score) / (home_team_score + away_team_score)
     away_dos = (away_team_score - home_team_score) / (home_team_score + away_team_score)
 
-    # glicko_instance.update_rating(home_team_name, away_team_name,
-    #                               home_dos, away_dos)
+    glicko_instance.update_rating(home_team_name, away_team_name,
+                                  home_dos, away_dos)
 

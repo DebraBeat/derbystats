@@ -46,7 +46,7 @@ def max_score():
 
 
 # construct Poisson for each mean goals value
-# poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
+poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
 # poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
 # poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
 
@@ -95,3 +95,4 @@ g.plot_joint(sns.histplot)
 g.plot_marginals(sns.boxplot)
 
 plt.show()
+

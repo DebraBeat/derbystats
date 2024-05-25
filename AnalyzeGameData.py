@@ -2,6 +2,8 @@ import math
 import numpy as np
 import pandas as pd
 from CleanDataframe import clean
+from sklearn.linear_model import PoissonRegressor
+from sklearn.model_selection import train_test_split
 
 # TODO: Convert some comments to docstrings.
 df = pd.read_csv('GameData.csv')
@@ -21,16 +23,8 @@ primary_scores_df.to_csv('PrimaryScoresData.csv')
 # ELO Ranking System
 class Elo:
     def __init__(self, input_df, home_team_col, away_team_col):
-        """
-        Number is a guess based on flat track stats data
-        In the initial ELO implementation, k = 32 and exp / 400,
-        since flat track stats uses exp / 100,
-        I bumped k up by 4
-        What needs to be implemented is a k function that takes
-        in total number of games played
-        """
 
-        self.k = 128
+        self.k = 32 # Put back to orginal elo value
         # Number comes from flat track stats
         self.delta = 0.06
 
@@ -298,20 +292,22 @@ elo_instance.elo_ser.to_csv('elo_ranks.csv')
 
 glicko_instance = Glicko2(df, 'Home Team', 'Away Team')
 
-i = 0
-for index, match in primary_scores_df.iterrows():
-    home_team_name = match.loc['Home Team']
-    away_team_name = match.loc['Away Team']
-    home_team_score = int(match.loc['Home Team Score'])
-    away_team_score = int(match.loc['Away Team Score'])
 
-    i += 1
-    if i == 39:
-        break
-    # Using difference over sum for scores instead of raw scores
-    home_dos = (home_team_score - away_team_score) / (home_team_score + away_team_score)
-    away_dos = (away_team_score - home_team_score) / (home_team_score + away_team_score)
-
-    glicko_instance.update_rating(home_team_name, away_team_name,
-                                  home_dos, away_dos)
+# TODO: Fix glicko implementation
+# i = 0
+# for index, match in primary_scores_df.iterrows():
+#     home_team_name = match.loc['Home Team']
+#     away_team_name = match.loc['Away Team']
+#     home_team_score = int(match.loc['Home Team Score'])
+#     away_team_score = int(match.loc['Away Team Score'])
+#
+#     i += 1
+#     if i == 39:
+#         break
+#     # Using difference over sum for scores instead of raw scores
+#     home_dos = (home_team_score - away_team_score) / (home_team_score + away_team_score)
+#     away_dos = (away_team_score - home_team_score) / (home_team_score + away_team_score)
+#
+#     glicko_instance.update_rating(home_team_name, away_team_name,
+#                                   home_dos, away_dos)
 

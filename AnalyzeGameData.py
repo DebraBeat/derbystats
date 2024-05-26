@@ -2,8 +2,7 @@ import math
 import numpy as np
 import pandas as pd
 from CleanDataframe import clean
-from sklearn.linear_model import PoissonRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KernelDensity
 
 # TODO: Convert some comments to docstrings.
 df = pd.read_csv('GameData.csv')
@@ -310,4 +309,10 @@ glicko_instance = Glicko2(df, 'Home Team', 'Away Team')
 #
 #     glicko_instance.update_rating(home_team_name, away_team_name,
 #                                   home_dos, away_dos)
+
+X_home = primary_scores_df['Home Team Score'].to_frame()
+X_away = primary_scores_df['Away Team Score'].to_frame()
+
+kde_home = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X_home)
+kde_away = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X_away)
 

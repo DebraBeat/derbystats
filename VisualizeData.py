@@ -46,7 +46,7 @@ def max_score():
 
 
 # construct Poisson for each mean goals value
-poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
+# poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
 # poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
 # poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
 
@@ -80,15 +80,18 @@ sns.histplot(data=score_df,
              y='Away Team Score',
              cbar=True)
 
-plt.savefig("Home vs Away Scores freq.png")
+# plt.show()
+# plt.savefig("Home vs Away Scores freq.png")
+# plt.close()
 
 sns.histplot(data=score_df,
              multiple='dodge',
              shrink=0.6,
              kde=True,
              stat='density')
-
-plt.savefig("Home vs Away Scores.png")
+# plt.show()
+# plt.savefig("Home vs Away Scores.png")
+# plt.close()
 
 g = sns.JointGrid(data=score_df,
                   x="Home Team Score",
@@ -97,9 +100,27 @@ g = sns.JointGrid(data=score_df,
 g.plot_joint(sns.histplot)
 g.plot_marginals(sns.boxplot)
 
-plt.savefig("Home vs Away JointGrid.png")
+# plt.savefig("Home vs Away JointGrid.png")
 
 elo_df = pd.read_csv("elo_ranks.csv")
 
 sns.histplot(data=elo_df)
-plt.savefig("Elo rankings distribution")
+# plt.savefig("Elo rankings distribution")
+
+# Get a list of Jam Columns
+jam_cols = [f'Home Jam {i} Cumulative Score' for i in range(1,77)] \
+    + [f'Away Jam {i} Cumulative Score' for i in range(1,77)]
+
+# Create a long form DataFrame with the jam scores
+jam_df = pd.concat([df[jam] for jam in jam_cols], keys=[jam for jam in jam_cols])
+# Convert to frame and create a Jam Column, which is a tuple with the jam number and match number
+jam_df = jam_df.to_frame()
+jam_df['Jam'] = jam_df.index
+# Break the two into two seperate columns
+jam_df[['Jam', 'Game Number']] = pd.DataFrame(jam_df['Jam'].to_list(), index=jam_df.index)
+# Reset the index
+jam_df = jam_df.reset_index()
+# Rename Jam Score column
+jam_df = jam_df.rename(columns={0: 'Jam Score'})
+# Drop missing values
+jam_df = jam_df.dropna()

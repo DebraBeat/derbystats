@@ -75,12 +75,16 @@ sns.histplot(data=score_df,
 # plt.show()
 # plt.savefig("Home vs Away Scores freq.png")
 # plt.close()
+plt.close('all')
 
-sns.histplot(data=score_df,
+p = sns.histplot(data=score_df,
              multiple='dodge',
              shrink=0.6,
              kde=True,
              stat='density')
+p.set(xlabel='Points')
+p.set_title('Score PDF')
+# plt.show()
 # plt.show()
 # plt.savefig("Home vs Away Scores.png")
 # plt.close()
@@ -93,10 +97,13 @@ g.plot_joint(sns.histplot)
 g.plot_marginals(sns.boxplot)
 
 # plt.savefig("Home vs Away JointGrid.png")
-
+plt.close('all')
 elo_df = pd.read_csv("elo_ranks.csv")
 
-sns.histplot(data=elo_df)
+p = sns.histplot(data=elo_df)
+p.set(xlabel='Elo Rating')
+p.set_title('Elo Rating Distribution')
+# plt.show()
 # plt.savefig("Elo rankings distribution")
 plt.close('all')
 

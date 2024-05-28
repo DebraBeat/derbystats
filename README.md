@@ -13,8 +13,8 @@ Play that is unsafe or illegal may result in a Skater being assessed a penalty, 
 The team with the most points at the end of the game wins.
 
 ## Getting Derby Data
-Every official inter-league game has a corresponding worksheet attached to it.
-A worksheet is an excel file that contains all relevant info about the game.
+Every official inter-league match has a corresponding worksheet attached to it.
+A worksheet is an excel file that contains all relevant info about the match.
 We can parse these worksheets to analyze and visualize derby statistics! Luckily for us, WFTDA
 maintains a list of worksheets [here.](https://drive.google.com/drive/folders/1TC1QUmpIwy9NZX9DBPUPoHjkjFbbzyYr)
 
@@ -23,7 +23,13 @@ In our `CreateDataFrame.py` file, we use the method
 to convert each sheet into a pandas series.
 
 Then we simply iterate over each spreadsheet, and append the
-series to a pandas DataFrame containing data on all previous games.
+series to a pandas DataFrame containing data on all previous matches.
+
+However this DataFrame is messy. Due to the way the data was
+variously put into the worksheets, our pandas columns are not
+type correct, and our indices are weird as well. We use the `clean(df)`
+method from `CleanDataFrame.py` to make our
+Dataframe workable. 
  
 ## Rating of Derby Teams
 With this in mind, it's important to rate teams to judge how strong
@@ -34,4 +40,50 @@ in rating players in video games.
 
 WFTDA uses it's own rating algorithm.You can read about it [here.](https://static.wftda.com/files/competition/2023-WFTDA-Rankings-Algorithm.pdf)
 
-In my implementation of the Elo rating algorithm, 
+### Elo implementation
+In `AnalyzeGameData.py`, we create a Elo class to contain all relevant
+methods and variables which will only be instantiated
+once. Most notably, this class contains `elo_df`, a DataFrame
+containing the Elo rating of each team.
+
+In my implementation of the Elo rating algorithm, I use the
+difference of scores over sum of scores instead of the raw scores, as
+it better reflects which team was in control of the match.
+
+We initialize each team to begin with a 700 rating, and go through
+our match DataFrame and update `elo_df` accordingly.
+
+In `VisualizeData.py`, we produce a graph of the distribution of
+Elo ratings. Note that it roughly follows a normal distribution as
+intended by the Elo algorithm.
+
+![Elo rankings distribution.png](Elo%20rankings%20distribution.png)
+
+### glicko-2 implementation
+This implementation is still under works. Currently, the volatility
+of each team's ratings makes the rating diverge (go to extreme values).
+A code review is needed.
+
+## Analysis of Home vs Away teams
+Oftentimes, an away team will want to play a higher rated
+home team. Even though they will most likely lose, their
+rating will increase if they score more points than is expected
+by WFTDAs algorithm (similar the Elo algorithm).
+
+Because of this, home teams often have an advantage. Let's
+visualize what that advantage looks like.
+
+![Home vs Away Scores freq.png](Home%20vs%20Away%20Scores%20freq.png)
+
+We can see from the above that most games are pretty close,
+however with the following graphs we can see the home team
+has a clear advantage.
+
+![Home vs Away JointGrid.png](Home%20vs%20Away%20JointGrid.png)
+![Home vs Away Scores.png](Home%20vs%20Away%20Scores.png)
+We can see from the first graph above that although the
+Inner Quartile range is roughly the same for Home vs Away teams
+the home team has a higher first quartile, mean, and third quartile.
+
+From the second graph above, the distinction is even clearer.
+The away team is less likely to score above 125 points.

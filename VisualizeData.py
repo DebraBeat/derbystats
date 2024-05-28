@@ -8,15 +8,6 @@ from CleanDataframe import clean
 df = pd.read_csv('GameData.csv')
 df = clean(df)
 
-# jam_cols = []
-#
-# for s in list(df.columns):
-#     if 'Jam' in s:
-#         jam_cols.append(s)
-#
-# jam_df = df[jam_cols]
-# home_jam_df = jam_df.iloc[:, 0:78]
-
 score_df = df[['Home Team', 'Away Team', 'Home Team Score', 'Away Team Score']]
 
 # We need find the valid interval and get rid of outliers in our score_df DataFrame
@@ -39,6 +30,7 @@ away_VI = [score_df['Away Team Score'].quantile(0.25) - 1.5 * away_IQR,
 
 score_df = score_df.drop(score_df[(score_df['Away Team Score'] > away_VI[1]) |
                                   (score_df['Away Team Score'] < away_VI[0])].index)
+
 
 # The highest score in the data set. It is set inside a method to prevent it from being overwritten
 def max_score():
@@ -106,10 +98,11 @@ elo_df = pd.read_csv("elo_ranks.csv")
 
 sns.histplot(data=elo_df)
 # plt.savefig("Elo rankings distribution")
+plt.close('all')
 
 # Get a list of Jam Columns
-jam_cols = [f'Home Jam {i} Cumulative Score' for i in range(1,77)] \
-    + [f'Away Jam {i} Cumulative Score' for i in range(1,77)]
+jam_cols = [f'Home Jam {i} Cumulative Score' for i in range(1, 77)] \
+           + [f'Away Jam {i} Cumulative Score' for i in range(1, 77)]
 
 # Create a long form DataFrame with the jam scores
 jam_df = pd.concat([df[jam] for jam in jam_cols], keys=[jam for jam in jam_cols])
@@ -124,3 +117,25 @@ jam_df = jam_df.reset_index()
 jam_df = jam_df.rename(columns={0: 'Jam Score'})
 # Drop missing values
 jam_df = jam_df.dropna()
+# Create a team type column to use a hue in seaborn
+jam_df['Team Type'] = jam_df['Jam'].str.slice(0, 4)
+# Create a jam number column to use in seaborn
+jam_df['Jam Number'] = jam_df['Jam'].str.slice(9, 11)
+# Convert it to ints
+jam_df['Jam Number'] = jam_df['Jam Number'].astype('int')
+
+# We need find the valid interval and get rid of outliers in our jam_df DataFrame
+for jam_number in range(1,77):
+    q1 = jam_df[jam_df['Jam Number'] == jam_number]['Jam Score'].quantile(0.25)
+    q3 = jam_df[jam_df['Jam Number'] == jam_number]['Jam Score'].quantile(0.75)
+    iqr = q3 - q1  # Inner Quartile Range
+    vi = [q1 - 1.5 * iqr, q3 + 1.5 * iqr]  # Valid interval
+
+    outliers = jam_df[(jam_df['Jam Number'] == jam_number) &
+                      ((jam_df['Jam Score'] > vi[1]) | (jam_df['Jam Score'] < vi[0]))]
+
+    jam_df = jam_df.drop(outliers.index)
+
+sns.lineplot(data=jam_df, x="Jam Number", y="Jam Score", hue="Team Type")
+plt.savefig("Home vs Away Jams LinePlot.png")
+# plt.show()

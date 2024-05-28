@@ -136,6 +136,8 @@ for jam_number in range(1,77):
 
     jam_df = jam_df.drop(outliers.index)
 
-sns.lineplot(data=jam_df, x="Jam Number", y="Jam Score", hue="Team Type")
-plt.savefig("Home vs Away Jams LinePlot.png")
+# sns.lineplot(data=jam_df, x="Jam Number", y="Jam Score", hue="Team Type")
+# plt.savefig("Home vs Away Jams LinePlot.png")
 # plt.show()
+
+jam_df.to_csv("jam_df.csv")

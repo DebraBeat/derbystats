@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from CleanDataframe import clean
 from sklearn.neighbors import KernelDensity
+from scipy.stats import poisson, skellam
 
 # TODO: Convert some comments to docstrings.
 df = pd.read_csv('GameData.csv')
@@ -344,3 +345,24 @@ real_home_win_per = real_home_wins / primary_scores_df.shape[0]
 
 print(f'KDE winning percent: {kde_home_win_per * 100:.2f}')
 print(f'Real life winning percent: {real_home_win_per * 100:.2f}')
+
+def max_score():
+    return int(max(primary_scores_df['Home Team Score'].max(), primary_scores_df['Away Team Score'].max()))
+
+# construct Poisson for each mean goals value
+# TODO: Use sympy to find the max of each
+poisson_pred_home = [poisson.pmf(i,
+                                 primary_scores_df['Home Team Score'].mean()) for i in range(max_score())]
+poisson_pred_away = [poisson.pmf(i,
+                                 primary_scores_df['Away Team Score'].mean()) for i in range(max_score())]
+
+# Probability of a draw
+draw_prob = skellam.pmf(0.0, primary_scores_df['Home Team Score'].mean(), primary_scores_df['Away Team Score'].mean())
+print(f'Probability of a draw: {draw_prob}')
+
+# Probability of a loss
+loss_prob = skellam.cdf(0.0, primary_scores_df['Home Team Score'].mean(), primary_scores_df['Away Team Score'].mean())
+print(f'Probability of a loss: {loss_prob}')
+
+# Probability of a win = 1 - P(loss)
+print(f'Probability of a win: {1 - loss_prob}')

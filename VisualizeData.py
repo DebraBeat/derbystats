@@ -40,30 +40,37 @@ def max_score():
 # construct Poisson for each mean goals value
 poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
 poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
-poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
+
+# 112 is the third quantile
+d = {'Winning diff': [i for i in range(-112, 113)],
+     'PMF': [skellam.pmf(i, score_df['Home Team Score'].mean(), score_df['Away Team Score'].mean())
+             for i in range(-112, 113)]}
+
+skellam_df = pd.DataFrame(d)
+p = sns.lineplot(data=skellam_df, x='Winning diff', y='PMF')
+p.set_title('Chance of Home Team Winning by certain number of points')
+plt.xlabel("Score Difference (Home - Away)")
+plt.ylabel("Probability")
+# plt.savefig("Skellam dist Home vs Away")
+
 
 # matplotlib version
-#
-# Histogram of final scores
-# plt.hist(score_df[['Home Team Score', 'Away Team Score']],
-#        label=['Home', 'Away'], density=True, bins=711)
-#
-# # Poisson distribution graphs for home and away teams
-# pois_home, = plt.plot([i for i in range(1, max_score()+1)], poisson_pred_home,
-#                       linestyle='-', label="Home")
-# pois_away, = plt.plot([i for i in range(1, max_score()+1)], poisson_pred_away,
-#                       linestyle='-', label="Away")
-#
-# leg=plt.legend(loc='upper right', fontsize=13, ncol=2)
-# leg.set_title("   Actual          Poisson       ",
-#               prop= {'size':'14', 'weight':'bold'})
-#
-# plt.xticks([i*33 for i in range(1,11)],[i*33 for i in range(1,11)])
-# plt.xlabel("Final Scores",size=13)
-# plt.ylabel("Proportion of Matches",size=13)
-# plt.title("Proportion of scores per game",size=14,fontweight='bold')
-#
-#
+# Poisson distribution graphs for home and away teams
+pois_home, = plt.plot([i for i in range(1, max_score() + 1)], poisson_pred_home,
+                      linestyle='-', label="Home")
+pois_away, = plt.plot([i for i in range(1, max_score() + 1)], poisson_pred_away,
+                      linestyle='-', label="Away")
+
+leg = plt.legend(loc='upper right', fontsize=13, ncol=2)
+leg.set_title("Poisson",
+              prop={'size': '10', 'weight': 'bold'})
+
+plt.xticks([i * 33 for i in range(1, 11)], [i * 33 for i in range(1, 11)])
+plt.xlabel("Final Scores", size=13)
+plt.ylabel("Proportion of Matches", size=13)
+plt.title("Proportion of scores per game", size=14, fontweight='bold')
+
+# plt.savefig('Poisson Distributions')
 # plt.show()
 
 # seaborn version
@@ -78,10 +85,10 @@ sns.histplot(data=score_df,
 plt.close('all')
 
 p = sns.histplot(data=score_df,
-             multiple='dodge',
-             shrink=0.6,
-             kde=True,
-             stat='density')
+                 multiple='dodge',
+                 shrink=0.6,
+                 kde=True,
+                 stat='density')
 p.set(xlabel='Points')
 p.set_title('Score PMF')
 # plt.show()
@@ -132,7 +139,7 @@ jam_df['Jam Number'] = jam_df['Jam'].str.slice(9, 11)
 jam_df['Jam Number'] = jam_df['Jam Number'].astype('int')
 
 # We need find the valid interval and get rid of outliers in our jam_df DataFrame
-for jam_number in range(1,77):
+for jam_number in range(1, 77):
     q1 = jam_df[jam_df['Jam Number'] == jam_number]['Jam Score'].quantile(0.25)
     q3 = jam_df[jam_df['Jam Number'] == jam_number]['Jam Score'].quantile(0.75)
     iqr = q3 - q1  # Inner Quartile Range

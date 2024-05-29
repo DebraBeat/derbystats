@@ -82,12 +82,21 @@ has a clear advantage.
 
 ![Home vs Away JointGrid.png](Home%20vs%20Away%20JointGrid.png)
 ![Home vs Away Scores.png](Home%20vs%20Away%20Scores.png)
+
 We can see from the first graph above that although the
 Inner Quartile range is roughly the same for Home vs Away teams
 the home team has a higher first quartile, mean, and third quartile.
 
 From the second graph above, the distinction is even clearer.
 The away team is less likely to score above 125 points.
+
+![Poisson Distributions.png](Poisson%20Distributions.png)
+
+In this graph we can see the poisson distribution using the mean
+number of scores by home and away teams. Notice how the peaks
+are the same as the KDEs, but the distribution quickly drops off to `0`.
+
+![Skellam dist Home vs Away.png](Skellam%20dist%20Home%20vs%20Away.png)
 
 ### Analysis - Kernel Density Estimation
 While visualization is a powerful tool in helping us
@@ -98,7 +107,24 @@ and also compare it to real world data. Although the bandwidth
 is set at `0.5`, we can write code to correctly fit our KDE by
 minimizing the difference between KDE outcomes and real world data.
 
+Also note that while KDEs are fun and useful for smoothing
+it is ultimately pointless. Our KDEs can estimate our statistics,
+which means that simply drawing a uniform random number between
+`[0,1]` and comparing it to the real world probability of winning
+is a more effective way of running a simulation.
+
 From both KDE simulations and the statistics, we see that the
 home team has a winning percent of `61.37%`!
 
-### Analysis - Poisson and Skellam
+### Analysis - Poisson and Skellam PMF / CDF
+In `VisualizeData.py` we create two lists of values for home
+and away teams using the poisson distribution and the mean score
+for each team. We can clearly see from our visualization that
+the home team has an advantage. We could use the `sympy` library
+to find the max value of each distribution as well.
+
+Additionally, we create a skellam distribution to find the win/loss
+probability. In this case, it predicts a home team win `95.58%` of
+the time, perhaps there is a more accurate way of modeling this data.
+
+### Analysis - Poisson Regressor

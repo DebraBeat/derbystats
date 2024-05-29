@@ -38,9 +38,9 @@ def max_score():
 
 
 # construct Poisson for each mean goals value
-# poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
-# poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
-# poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
+poisson_pred_home = [poisson.pmf(i, score_df['Home Team Score'].mean()) for i in range(max_score())]
+poisson_pred_away = [poisson.pmf(i, score_df['Away Team Score'].mean()) for i in range(max_score())]
+poisson_pred = np.column_stack([poisson_pred_home, poisson_pred_away])
 
 # matplotlib version
 #
@@ -83,8 +83,7 @@ p = sns.histplot(data=score_df,
              kde=True,
              stat='density')
 p.set(xlabel='Points')
-p.set_title('Score PDF')
-# plt.show()
+p.set_title('Score PMF')
 # plt.show()
 # plt.savefig("Home vs Away Scores.png")
 # plt.close()
@@ -98,6 +97,7 @@ g.plot_marginals(sns.boxplot)
 
 # plt.savefig("Home vs Away JointGrid.png")
 plt.close('all')
+
 elo_df = pd.read_csv("elo_ranks.csv")
 
 p = sns.histplot(data=elo_df)

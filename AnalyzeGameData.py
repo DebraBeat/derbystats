@@ -310,9 +310,37 @@ glicko_instance = Glicko2(df, 'Home Team', 'Away Team')
 #     glicko_instance.update_rating(home_team_name, away_team_name,
 #                                   home_dos, away_dos)
 
+# Data used for Kernel Density Approximation
 X_home = primary_scores_df['Home Team Score'].to_frame()
 X_away = primary_scores_df['Away Team Score'].to_frame()
 
+# Kernel Density Approximations for home and away teams
+# TODO: properly fit bandwidth
 kde_home = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X_home)
 kde_away = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X_away)
 
+# Putting them into a series
+# Note that the KDEs are two dimensional numpy arrays, so we need to unravel them
+samples = pd.DataFrame({'Home': kde_home.sample(10000000, 0).ravel(order='C'),
+                        'Away': kde_away.sample(10000000, 0).ravel(order='C')})
+
+# Scores are integers, so we round every score down
+samples['Home'] = samples['Home'].astype('int')
+samples['Away'] = samples['Away'].astype('int')
+
+# The length of the DataFrame where the home team score is greater than the away team
+# is the number of wins
+kde_home_wins = samples[samples['Home'] > samples['Away']].shape[0]
+
+# KDE winning percent
+kde_home_win_per = kde_home_wins / samples.shape[0]
+
+# Real life data
+real_home_wins = primary_scores_df[primary_scores_df['Home Team Score'] >
+                                   primary_scores_df['Away Team Score']].shape[0]
+
+# Real life winning percent
+real_home_win_per = real_home_wins / primary_scores_df.shape[0]
+
+print(f'KDE winning percent: {kde_home_win_per * 100:.2f}')
+print(f'Real life winning percent: {real_home_win_per * 100:.2f}')

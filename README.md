@@ -64,7 +64,8 @@ This implementation is still under works. Currently, the volatility
 of each team's ratings makes the rating diverge (go to extreme values).
 A code review is needed.
 
-## Analysis of Home vs Away teams
+## Home vs Away teams
+### Visualization
 Oftentimes, an away team will want to play a higher rated
 home team. Even though they will most likely lose, their
 rating will increase if they score more points than is expected
@@ -87,3 +88,17 @@ the home team has a higher first quartile, mean, and third quartile.
 
 From the second graph above, the distinction is even clearer.
 The away team is less likely to score above 125 points.
+
+### Analysis - Kernel Density Estimation
+While visualization is a powerful tool in helping us
+understand data, it is useful to help quantify it.
+
+For fun, we can use a kernel density estimation to simulate matches
+and also compare it to real world data. Although the bandwidth
+is set at `0.5`, we can write code to correctly fit our KDE by
+minimizing the difference between KDE outcomes and real world data.
+
+From both KDE simulations and the statistics, we see that the
+home team has a winning percent of `61.37%`!
+
+### Analysis - Poisson and Skellam

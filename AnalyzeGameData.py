@@ -366,3 +366,17 @@ print(f'Probability of a loss: {loss_prob}')
 
 # Probability of a win = 1 - P(loss)
 print(f'Probability of a win: {1 - loss_prob}')
+
+# Jam Analysis
+jam_df = pd.read_csv('jam_df.csv')
+jam_freq = [jam_df[jam_df['Jam Number'] == i].shape[0] for i in range(1,77)]
+jam_freq = pd.Series(jam_freq)
+
+print(f"The mean number of jams is {jam_freq.mean / jam_freq.min} less than the minimum")
+
+# Jam Std
+jam_std = [jam_df[jam_df["Jam Number"] == i]["Jam Score"].std() for i in range(1,77)]
+jam_std_change = [jam_std[i] - jam_std[i-1] for i in range(1,76)]
+
+print(f"Jam deviation at jams 30-35: {jam_std[29:34]}")
+print(f'The highest change is at Jam 72 where it is {max(jam_std_change)}')

@@ -124,7 +124,38 @@ the home team has an advantage. We could use the `sympy` library
 to find the max value of each distribution as well.
 
 Additionally, we create a skellam distribution to find the win/loss
-probability. In this case, it predicts a home team win `95.58%` of
-the time, perhaps there is a more accurate way of modeling this data.
+probability. 
 
-### Analysis - Poisson Regressor
+## Jams
+
+### Visualization
+![Home vs Away Jams LinePlot.png](Home%20vs%20Away%20Jams%20LinePlot.png)
+
+From the above we can see the cumulative jam score, as well as
+the first and third quartiles of the cumulative score. Not the
+discrepancy around Jams 32 and 68.
+
+![Number of Jams per Jam Number.png](Number%20of%20Jams%20per%20Jam%20Number.png)
+This discrepancy can be attributed to the fact that not many jams
+take place by Jam 31 and 67, as the clock usual runs out.
+Additionally, we can see a discrepancy in reporting, with some recorders
+starting jams at zero, and others starting jams at 1.
+
+### Analysis
+In `AnalyzeGameData.py` we use the frequency of each jam to show that
+the minimum is over 500 times less than the mean! At a minimum of `2`
+from over 750 games analyzed, the probability of a jam going past 32
+in either half is less than `0.1%`!
+
+We can see the highest change is at jam 72, where it is a whopping 20 points!
+The high deviation in the later jams indicate two things: Firstly, there are not
+a lot of jams played in those high numbers. Secondly, teams are really fighting
+to survive!
+
+## Conclusion
+We can conclude that the home team has a definite advantage.
+While derby is very fun to watch, it should be enjoyed for the
+love of the game, not for competitive reasons.
+
+We can also conclude that players are willing to go "all out"
+towards the match, which makes it very fun to watch!

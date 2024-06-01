@@ -372,7 +372,7 @@ jam_df = pd.read_csv('jam_df.csv')
 jam_freq = [jam_df[jam_df['Jam Number'] == i].shape[0] for i in range(1,77)]
 jam_freq = pd.Series(jam_freq)
 
-print(f"The mean number of jams is {jam_freq.mean / jam_freq.min} less than the minimum")
+print(f"The mean number of jams is {jam_freq.mean() / jam_freq.min()} less than the minimum")
 
 # Jam Std
 jam_std = [jam_df[jam_df["Jam Number"] == i]["Jam Score"].std() for i in range(1,77)]
